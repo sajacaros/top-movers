@@ -5,6 +5,11 @@ on:
     # UTC 09:00 = KST 18:00, 월~금
     - cron: '0 9 * * 1-5'
   workflow_dispatch:
+    inputs:
+      target_date:
+        description: '조회할 날짜 (YYYYMMDD). 비워두면 오늘 날짜'
+        required: false
+        default: ''
 
 jobs:
   notify:
@@ -25,4 +30,5 @@ jobs:
       - name: Run top movers script
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TARGET_DATE: ${{ github.event.inputs.target_date }}
         run: python top_movers.py

@@ -25,8 +25,8 @@ def send_to_discord(message: str, webhook_url: str) -> None:
 
 
 def main():
-    # 1. 날짜 설정
-    target_date = datetime.today().strftime("%Y%m%d")
+    # 1. 날짜 설정 (TARGET_DATE 환경변수가 있으면 사용, 없으면 오늘)
+    target_date = os.environ.get("TARGET_DATE") or datetime.today().strftime("%Y%m%d")
     min_trading_value = 50_000_000_000  # 500억 원
 
     # 2. 전 종목 시세 데이터 가져오기
