@@ -3,7 +3,18 @@ import sys
 from datetime import datetime
 
 import requests
+from duckduckgo_search import DDGS
 from pykrx import stock
+
+
+def search_news(stock_name: str, max_results: int = 2) -> list[dict]:
+    """종목명으로 DuckDuckGo 뉴스를 검색한다."""
+    try:
+        with DDGS() as ddgs:
+            results = list(ddgs.news(f"{stock_name} 주식", max_results=max_results))
+        return results
+    except Exception:
+        return []
 
 
 def send_to_discord(message: str, webhook_url: str) -> None:
@@ -54,6 +65,9 @@ def main():
             f"{row['종목명']:<10} | {row['종가']:>10,}원 | "
             f"{row['등락률']:>+7.2f}% | {row['거래대금(억)']:>10,.1f}억"
         )
+        news_items = search_news(row["종목명"])
+        for news in news_items:
+            lines.append(f"  📰 {news['title']} - {news['url']}")
 
     lines.append("━" * 50)
     lines.append(
@@ -65,10 +79,29 @@ def main():
     # 8. 출력
     print(message)
 
-    # 9. 디스코드 발송
+    # 9. 디스코드 발송 (2000자 제한 대응: 초과 시 여러 메시지로 분할)
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     if webhook_url:
-        send_to_discord(message, webhook_url)
+        if len(message) <= 2000:
+            send_to_discord(message, webhook_url)
+        else:
+            # 줄 단위로 분할하여 2000자 이내 메시지들로 나눔
+            chunks = []
+            current_chunk = []
+            current_len = 0
+            for line in lines:
+                line_len = len(line) + 1  # +1 for newline
+                if current_len + line_len > 2000 and current_chunk:
+                    chunks.append("\n".join(current_chunk))
+                    current_chunk = [line]
+                    current_len = line_len
+                else:
+                    current_chunk.append(line)
+                    current_len += line_len
+            if current_chunk:
+                chunks.append("\n".join(current_chunk))
+            for chunk in chunks:
+                send_to_discord(chunk, webhook_url)
         print("\n📨 디스코드 발송 완료.")
     else:
         print("\n⚠️ DISCORD_WEBHOOK_URL 환경변수가 없어 디스코드 발송을 건너뜁니다.")
