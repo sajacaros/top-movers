@@ -3,18 +3,7 @@ import sys
 from datetime import datetime
 
 import requests
-from duckduckgo_search import DDGS
 from pykrx import stock
-
-
-def search_news(stock_name: str, max_results: int = 2) -> list[dict]:
-    """종목명으로 DuckDuckGo 뉴스를 검색한다."""
-    try:
-        with DDGS() as ddgs:
-            results = list(ddgs.news(f"{stock_name} 주식", max_results=max_results))
-        return results
-    except Exception:
-        return []
 
 
 def send_to_discord(message: str, webhook_url: str) -> None:
@@ -65,9 +54,6 @@ def main():
             f"{row['종목명']:<10} | {row['종가']:>10,}원 | "
             f"{row['등락률']:>+7.2f}% | {row['거래대금(억)']:>10,.1f}억"
         )
-        news_items = search_news(row["종목명"])
-        for news in news_items:
-            lines.append(f"  📰 {news['title']} - {news['url']}")
 
     lines.append("━" * 50)
     lines.append(

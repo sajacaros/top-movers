@@ -1,3 +1,2 @@
 pykrx
 requests
-duckduckgo-search
