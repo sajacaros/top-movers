@@ -43,51 +43,24 @@ def main():
 
     # 7. 메시지 조립
     date_display = f"{target_date[:4]}-{target_date[4:6]}-{target_date[6:]}"
-    lines = []
-    lines.append(f"🏆 {date_display} '돈 몰린' 급등주 Top 10 (거래대금 500억 이상)")
-    lines.append("━" * 50)
-    lines.append(f"{'종목명':<10} | {'종가':>10} | {'상승률':>8} | {'거래대금(억원)':>12}")
-    lines.append("━" * 50)
+    table_lines = []
+    table_lines.append(f"{'종목명':<10} {'종가':>10} {'상승률':>8} {'거래대금(억)':>10}")
+    table_lines.append("-" * 45)
 
     for _, row in rising_heavy.iterrows():
-        lines.append(
-            f"{row['종목명']:<10} | {row['종가']:>10,}원 | "
-            f"{row['등락률']:>+7.2f}% | {row['거래대금(억)']:>10,.1f}억"
+        table_lines.append(
+            f"{row['종목명']:<10} {row['종가']:>10,}원 {row['등락률']:>+7.2f}% {row['거래대금(억)']:>10,.1f}억"
         )
 
-    lines.append("━" * 50)
-    lines.append(
-        f"✅ 총 {len(df_filtered)}개 종목이 거래대금 500억 원을 넘겼습니다."
-    )
-
-    message = "\n".join(lines)
+    message = f"기준일: {date_display}\n```\n" + "\n".join(table_lines) + "\n```"
 
     # 8. 출력
     print(message)
 
-    # 9. 디스코드 발송 (2000자 제한 대응: 초과 시 여러 메시지로 분할)
+    # 9. 디스코드 발송
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     if webhook_url:
-        if len(message) <= 2000:
-            send_to_discord(message, webhook_url)
-        else:
-            # 줄 단위로 분할하여 2000자 이내 메시지들로 나눔
-            chunks = []
-            current_chunk = []
-            current_len = 0
-            for line in lines:
-                line_len = len(line) + 1  # +1 for newline
-                if current_len + line_len > 2000 and current_chunk:
-                    chunks.append("\n".join(current_chunk))
-                    current_chunk = [line]
-                    current_len = line_len
-                else:
-                    current_chunk.append(line)
-                    current_len += line_len
-            if current_chunk:
-                chunks.append("\n".join(current_chunk))
-            for chunk in chunks:
-                send_to_discord(chunk, webhook_url)
+        send_to_discord(message, webhook_url)
         print("\n📨 디스코드 발송 완료.")
     else:
         print("\n⚠️ DISCORD_WEBHOOK_URL 환경변수가 없어 디스코드 발송을 건너뜁니다.")
