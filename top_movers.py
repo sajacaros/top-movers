@@ -18,8 +18,12 @@ def main():
     target_date = os.environ.get("TARGET_DATE") or datetime.today().strftime("%Y%m%d")
     min_trading_value = 50_000_000_000  # 500억 원
 
-    # 2. 전 종목 시세 데이터 가져오기
-    df = stock.get_market_price_change(target_date, target_date)
+    # 2. 전 종목 시세 데이터 가져오기 (휴장일이면 pykrx가 IndexError를 던짐)
+    try:
+        df = stock.get_market_price_change(target_date, target_date)
+    except (IndexError, KeyError):
+        print(f"{target_date}은(는) 휴장일입니다. 스킵합니다.")
+        sys.exit(0)
 
     # 3. 휴장일 판단
     if df.empty:
